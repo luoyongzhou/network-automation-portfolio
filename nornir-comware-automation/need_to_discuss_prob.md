@@ -11,9 +11,11 @@
 
 以下内容是在给各模块补写 README 的过程中，逐一阅读现有代码后发现的具体缺陷和待讨论项，按"原有条目的延伸"和"新发现的问题"两部分组织。目的是把原来六条比较抽象的原则，落到具体的文件、具体的函数上，方便下一步动手改的时候有明确抓手。
 
-### 延伸①②：原子化目前只有一半落地，两种风格并存
+### 延伸①②：原子化目前只有一半落地，是因为规划中本就分了两类模板
 
 `atoms/` 目录定义的四阶段模板方法（`pre_check → deploy → post_check → rollback`）只在 H3C 的接口 IP 和 Loopback 两个场景（`atoms/h3c/cmd/*.py`、`atoms/h3c/netconf/interface_ip_address.py`）完整落地。OSPF 场景（`scenes/test_ospf_deploy_full.py`）没有走这套抽象，是直接在场景脚本的 `task_deploy_ospf`/`task_rollback_ospf` 函数体内手写下发和回退逻辑。
+
+这不是遗漏，而是规划上原本就区分了「原子化模板」（`atoms/`，面向单一资源的可复用四阶段能力）和「场景化模板」（`scenes/`，面向一次性的多资源组合下发）两条路线，OSPF 目前归入后者，所以没有套用 Atom 抽象。但两条路线目前只有前者成型，后者还停留在手写脚本阶段，"一半落地"指的是这个意义上的进度差，不是设计上的不一致。
 
 这不只是"风格不统一"的洁癖问题，实际差异体现在能力上：
 - OSPF 场景没有 `pre_check` 阶段，也就没有幂等跳过的判断（`merge` 操作本身幂等，但脚本不会在下发前告诉你"其实什么都不用做"）
@@ -22,11 +24,13 @@
 
 **待讨论**：是否要把 OSPF 重构为 `NetconfOspfAtom`？如果重构，快照该按 IP 场景的"变更前状态"模式，还是保留"期望配置"模式？两者哪个更适合 OSPF 这种"一次性配置多层级对象"的场景，需要先想清楚再动手，不要为了统一而统一。
 
-### 延伸②：`NetconfLoopbackAtom` 是半成品，暴露了抽象基类的一个设计漏洞
+### 延伸②：`NetconfLoopbackAtom` 是半成品，根源是 Comware 的 NETCONF 不支持直接创建 Loopback 接口
 
-`atoms/h3c/netconf/interface_loopback.py` 里的 `NetconfLoopbackAtom` 只实现了 `deploy_pre_check()` 和 `deploy()`，没有实现 `Atom` 抽象基类要求的标准四方法（`pre_check`/`post_check`/`rollback`）。因为 Python 的 `ABC` 只在**实例化时**检查抽象方法是否全部实现，如果这个类从来没有被真正 `执行()` 调用过（目前项目里确实没有任何地方实例化它），这个不完整实现不会在运行时报错，会一直静默存在，直到某天有人真的想用它才发现调不通。
+`atoms/h3c/netconf/interface_loopback.py` 里的 `NetconfLoopbackAtom` 只实现了 `deploy_pre_check()` 和 `deploy()`，没有实现 `Atom` 抽象基类要求的标准四方法（`pre_check`/`post_check`/`rollback`）。之所以停在半成品状态，是因为 Comware 设备的 NETCONF 接口不支持直接创建 Loopback 接口本身，只能走 cmd 命令行创建接口，再用 NETCONF 下发接口 IP——这条"cmd 建接口 + netconf 配 IP"的混合路径目前是在 `scenes/test_ip_deploy_full.py` 里手写实现的（配合 `atoms/h3c/cmd/interface_loopback.py` 的 `CmdLoopbackAtom`），而 `NetconfLoopbackAtom` 是另一次尝试——想看能否绕开这个限制，用纯 NETCONF 完成建接口+配IP（`deploy()` 里先建接口拿真实 ifindex，再配 IP），但因为 Comware 的限制没有真正走通验证，所以没有继续补完 `post_check`/`rollback`，也没有被任何场景实例化调用。
 
-**待讨论**：能否在 `build_inventory.py` 式的"预校验 Hook"精神下，加一个简单的启动期自检脚本，扫描 `atoms/` 下所有 `Atom` 子类，尝试实例化（不实际执行 `execute`）来提前暴露这类"定义了类但没实现全部抽象方法"的问题？还是说保持现状，靠 Code Review 兜底就够了（考虑到当前项目规模，重型工具可能得不偿失）。
+因为 Python 的 `ABC` 只在**实例化时**检查抽象方法是否全部实现，这个类从未被真正 `execute()` 调用过，这个不完整实现不会在运行时报错，会一直静默存在。
+
+**待讨论**：`NetconfLoopbackAtom` 是否该直接废弃，统一以"cmd 建接口 + netconf 配 IP"的混合路径作为 Loopback 场景的正式方案（并把这条路径也重构进 `atoms/` 的 Atom 抽象，而不是留在场景脚本里手写）？还是保留 `NetconfLoopbackAtom` 作为将来 Comware 某个版本支持纯 NETCONF 建接口后的预留实现？如果保留，建议在类文档字符串里写清楚"当前受限于设备能力，未走通，暂不可用"，避免被误当作可用的成熟实现。同时，能否加一个简单的启动期自检脚本，扫描 `atoms/` 下所有 `Atom` 子类，尝试实例化（不实际执行 `execute`）来提前暴露这类"定义了类但没实现全部抽象方法"的问题？还是说保持现状，靠 Code Review 兜底就够了（考虑到当前项目规模，重型工具可能得不偿失）。
 
 ### 延伸②：`execute()` 里 `post_check` 参数传递的设计随意点
 
@@ -45,7 +49,7 @@ return {"status": "success", "detail": None}
 ```
 如果设备实际返回了错误提示（如 H3C 常见的 `% Unrecognized command` 或 `% Wrong parameter`），但连接层面没有异常，这个函数依然会返回 `success`。也就是说，"回退逻辑需要健壮"的前提——"能准确判断每一步下发是否真的成功"——目前还没做到。这比回退逻辑本身更基础，需要先解决。
 
-**待讨论**：是否要在 `_render_and_send()` 里增加对返回文本的错误关键字匹配（如扫描 `%`、`Error`、`Invalid` 等 H3C 常见错误前缀）？如果要做，这份"错误关键字列表"应该按厂商维护在哪里（`atoms/h3c/` 下新增一个常量文件，还是放进 `atoms/utils.py` 做成厂商可扩展的检测函数）？
+**待讨论**：是否要在 `_render_and_send()` 里增加对返回文本的错误关键字匹配（如扫描 `%`、`Error`、`Invalid` 等 H3C 常见错误前缀）？如果要做，这份"错误关键字列表"应该按厂商维护在哪里（`atoms/h3c/` 下新增一个常量文件，还是放进 `atoms/utils.py` 做成厂商可扩展的检测函数）？此外，目前 cmd 回退也还没做到"下发预期结果检查"和"回退预期结果检查"——即回退命令发出去之后，同样没有校验设备返回内容是否符合预期；更深一层的问题是状态快照（snapshot）目前只是记录了变更前的原始值，还没有设计"快照如何映射到回退时该执行哪些具体步骤"的逻辑（比如同一个快照对应的回退可能是一步命令，也可能是需要按顺序拆成多步）。这两块是后续计划重点加强的方向，不是当前设计上刻意遗漏的。
 
 ### 延伸④：`rollback-on-error` 的原子性边界需要写进架构约束，不能只停留在文档里
 
@@ -53,9 +57,11 @@ return {"status": "success", "detail": None}
 
 **待讨论**：这是否需要做成应用层的两阶段提交（先全部设备 `validate` 通过，再统一 `commit`）？H3C NETCONF 是否支持 `validate` 操作（在 `edit_config` 到 candidate 之后、`commit` 之前先校验，多设备都 `validate` 通过后再统一 `commit`，理论上能缩小"部分成功"的时间窗口，但仍不能完全消除，因为 `commit` 本身也可能在某台设备上失败）？这属于分布式事务的经典难题，投入产出比需要评估——当前 3 台设备的验证规模下，人工兜底可能已经够用，但如果未来设备数量上升到几十台，人工检查的成本会线性增长。
 
-### 延伸⑤：netconf-browser 驱动的开发流程，目前只停留在个人经验，没有固化为可复用产物
+### 延伸⑤：netconf-browser 驱动的开发流程，本质上已经固化——所有 netconf 模板都是先跑通再固化的
 
-原有条目⑤提到"用 netconf-browser 做下发测试，跑通后写模板"，这是一个很实际的开发方法论，但目前项目里没有留下任何 netconf-browser 探索阶段的产物（比如测试用的原始 XML 请求/响应样例）。`scenes/summary.md` 里记录的报错信息（`The data model is not supported`、`Configuration already exists` 等）本质上就是这个探索过程的副产品，但目前是以"事后总结"的形式存在，不是以"可重放的测试样例"形式存在。
+原有条目⑤提到"用 netconf-browser 做下发测试，跑通后写模板"，这不只是一个建议中的方法论，而是项目里所有 netconf 模板实际遵循的固化流程：每一份 `atoms/h3c/netconf/` 和 `templates/**/netconf/` 下的模板，都是先在 netconf-browser 里手动下发验证无误后，才被固化为 Jinja2 模板代码的。也就是说"探索 → 固化"这个流程本身已经是既定做法，只是目前项目里没有留下这个探索阶段的中间产物（比如验证用的原始 XML 请求/响应样例）——`scenes/summary.md` 里记录的报错信息（`The data model is not supported`、`Configuration already exists` 等）就是这个探索过程留下的少量副产品，但只以"事后总结"的形式存在，没有以"可重放的测试样例"形式存在。
+
+**待讨论**：是否值得把每次探索验证过的 XML 请求/响应对，按场景归档成类似 `atoms/h3c/netconf/_verified_samples/ospf_create.xml` 这样的文件？好处是新人接手一个新场景时，可以先照抄一份已验证的 XML 手动用 netconf-browser 跑通，再回头写 Jinja2 模板，把"模型探索"和"模板工程化"两个阶段的产物都留痕，而不是只留下最终代码。
 
 **待讨论**：是否值得把每次探索验证过的 XML 请求/响应对，按场景归档成类似 `atoms/h3c/netconf/_verified_samples/ospf_create.xml` 这样的文件？好处是新人接手一个新场景时，可以先照抄一份已验证的 XML 手动用 netconf-browser 跑通，再回头写 Jinja2 模板，把"模型探索"和"模板工程化"两个阶段的产物都留痕，而不是只留下最终代码。
 
