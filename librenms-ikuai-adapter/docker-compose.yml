@@ -1,0 +1,167 @@
+name: lab-librenms
+
+networks:
+  librenms-net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.31.0.0/24
+
+services:
+  db:
+    image: mariadb:10
+    container_name: lab-librenms-db
+    command:
+      - "mysqld"
+      - "--innodb-file-per-table=1"
+      - "--lower-case-table-names=0"
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
+    volumes:
+      # 数据库数据持久化
+      - ./db:/var/lib/mysql:rw
+    environment:
+      - "TZ=${TZ}"
+      - "MARIADB_RANDOM_ROOT_PASSWORD=yes"
+      - "MYSQL_DATABASE=${MYSQL_DATABASE}"
+      - "MYSQL_USER=${MYSQL_USER}"
+      - "MYSQL_PASSWORD=${MYSQL_PASSWORD}"
+    restart: unless-stopped
+    networks:
+      - librenms-net
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: lab-librenms-redis
+    environment:
+      - "TZ=${TZ}"
+    restart: unless-stopped
+    networks:
+      - librenms-net
+
+  librenms:
+    image: librenms/librenms:latest
+    container_name: lab-librenms
+    hostname: librenms
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    ports:
+      - "${LIBRENMS_WEB_PORT}:8000"
+    depends_on:
+      - db
+      - redis
+    volumes:
+      # 二次开发核心挂载点：LibreNMS 官方镜像把 /data 映射为整个应用源码+配置+数据目录
+      # 容器首次启动会自动把内置源码同步到这个空目录，之后你可以直接改这里的PHP源码/includes/模板，改完即生效
+      # 具体子目录含义（同步完成后会出现）：
+      #   ./librenms/html/         前端入口与静态资源
+      #   ./librenms/includes/     核心PHP处理逻辑，二次开发主要改这里
+      #   ./librenms/LibreNMS/     核心类库(OS探测、告警、轮询逻辑等)
+      #   ./librenms/config.php    主配置文件
+      #   ./librenms/rrd/          性能数据(RRD文件)
+      #   ./librenms/logs/         日志
+      # 注意(实测纠正)：/opt/librenms 本身不在这份/data挂载范围内，是镜像内部文件系统，
+      # 直接改/opt/librenms下的文件(比如用docker cp)不会持久化，容器重建/内部服务重启就会丢失
+      - "./librenms:/data:rw"
+      # 自定义厂商图标持久化挂载：图标必须用独立bind mount精确挂到镜像内部路径才能持久化
+      - "./custom-icons/ikuai.png:/opt/librenms/html/images/os/ikuai.png:ro"
+      # 自定义OS识别定义持久化挂载（第十六章教训：os_detection/os_discovery同样不在/data范围内，
+      # 直接docker cp写入会在容器重建/内部服务重启时丢失，必须显式挂载才能持久生效）
+      - "./custom-os-definitions/os_detection/ikuai.yaml:/opt/librenms/resources/definitions/os_detection/ikuai.yaml:ro"
+      - "./custom-os-definitions/os_discovery/ikuai.yaml:/opt/librenms/resources/definitions/os_discovery/ikuai.yaml:ro"
+      # mib_dir: ikuai 配置项要求的路径同样在/opt/librenms下，直接挂载复用已持久化的/data/mibs/ikuai
+      - "./librenms/mibs/ikuai:/opt/librenms/mibs/ikuai:ro"
+    env_file:
+      - path: ./librenms.env
+        required: false
+    environment:
+      - "TZ=${TZ}"
+      - "PUID=${PUID}"
+      - "PGID=${PGID}"
+      - "DB_HOST=db"
+      - "DB_NAME=${MYSQL_DATABASE}"
+      - "DB_USER=${MYSQL_USER}"
+      - "DB_PASSWORD=${MYSQL_PASSWORD}"
+      - "DB_TIMEOUT=60"
+      - "REDIS_HOST=redis"
+    restart: unless-stopped
+    networks:
+      - librenms-net
+
+  snmptrapd:
+    image: librenms/librenms:latest
+    container_name: lab-librenms-snmptrapd
+    hostname: librenms-snmptrapd
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    depends_on:
+      - librenms
+      - redis
+    ports:
+      - "${LIBRENMS_SNMPTRAP_PORT}:162/udp"
+      - "${LIBRENMS_SNMPTRAP_PORT}:162/tcp"
+    volumes:
+      # 和主容器共享同一份/data，这样snmptrapd能读到后续放入mibs/目录下的厂商私有MIB
+      - "./librenms:/data:rw"
+      - "./librenms/mibs/ikuai:/opt/librenms/mibs/ikuai:ro"
+    env_file:
+      - path: ./librenms.env
+        required: false
+    environment:
+      - "TZ=${TZ}"
+      - "PUID=${PUID}"
+      - "PGID=${PGID}"
+      - "DB_HOST=db"
+      - "DB_NAME=${MYSQL_DATABASE}"
+      - "DB_USER=${MYSQL_USER}"
+      - "DB_PASSWORD=${MYSQL_PASSWORD}"
+      - "DB_TIMEOUT=60"
+      - "REDIS_HOST=redis"
+      - "SIDECAR_SNMPTRAPD=1"
+      # 测试环境用v2c community字符串，与设备/模拟发送端保持一致
+      - "LIBRENMS_SNMP_COMMUNITY=${LIBRENMS_SNMP_COMMUNITY}"
+      # 后续放置厂商私有MIB的目录（相对容器内/opt/librenms/mibs），多个用:分隔
+      - "SNMP_EXTRA_MIB_DIRS=${SNMP_EXTRA_MIB_DIRS}"
+    restart: unless-stopped
+    networks:
+      - librenms-net
+
+  dispatcher:
+    image: librenms/librenms:latest
+    container_name: lab-librenms-dispatcher
+    hostname: librenms-dispatcher
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    depends_on:
+      - librenms
+      - redis
+    volumes:
+      - "./librenms:/data:rw"
+      # 图标挂载：dispatcher是真正执行poll轮询、每次poll都会重新调用findOsImage判定icon的容器，
+      # 之前漏挂这一条，导致每次poll把icon判定为is_file找不到文件，覆盖回generic.svg（本次真实踩过的坑）
+      - "./custom-icons/ikuai.png:/opt/librenms/html/images/os/ikuai.png:ro"
+      - "./custom-os-definitions/os_detection/ikuai.yaml:/opt/librenms/resources/definitions/os_detection/ikuai.yaml:ro"
+      - "./custom-os-definitions/os_discovery/ikuai.yaml:/opt/librenms/resources/definitions/os_discovery/ikuai.yaml:ro"
+      - "./librenms/mibs/ikuai:/opt/librenms/mibs/ikuai:ro"
+    env_file:
+      - path: ./librenms.env
+        required: false
+    environment:
+      - "TZ=${TZ}"
+      - "PUID=${PUID}"
+      - "PGID=${PGID}"
+      - "DB_HOST=db"
+      - "DB_NAME=${MYSQL_DATABASE}"
+      - "DB_USER=${MYSQL_USER}"
+      - "DB_PASSWORD=${MYSQL_PASSWORD}"
+      - "DB_TIMEOUT=60"
+      - "REDIS_HOST=redis"
+      - "DISPATCHER_NODE_ID=dispatcher1"
+      - "SIDECAR_DISPATCHER=1"
+    restart: unless-stopped
+    networks:
+      - librenms-net

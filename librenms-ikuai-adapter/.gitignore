@@ -1,0 +1,12 @@
+*.swp
+*.tmp
+.DS_Store
+.env
+db/
+librenms/html/
+librenms/includes/
+librenms/LibreNMS/
+librenms/config.php
+librenms/rrd/
+librenms/logs/
+

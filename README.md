@@ -9,6 +9,10 @@
 | [vsphere-ip-validator](./vsphere-ip-validator) | 定时同步 vCenter 虚机与网络扫描结果到 NetBox IPAM，自动维护 IP 地址生命周期状态 | Python, pyVmomi, pynetbox, ThreadPoolExecutor |
 | [librenms-alert-notifier](./librenms-alert-notifier) | LibreNMS 告警转钉钉通知中间层，支持增量故障检测与分级重复提醒 | Python, LibreNMS API, MySQL, DingTalk Webhook |
 | [network-config-backup](./network-config-backup) | 网络设备配置每日采集 + 定期 Git 归档 + 高频可达性监控告警 | Python, Nornir, Netmiko, icmplib, Git, DingTalk Webhook |
+| [librenms-ikuai-adapter](./librenms-ikuai-adapter) | LibreNMS 补全独立 snmptrapd 容器 + iKuai 私有 MIB 设备识别/轮询适配 | Docker Compose, LibreNMS, SNMP |
+| [librenms-troubleshooting-faq](./librenms-troubleshooting-faq) | LibreNMS 生产环境真实排障案例集（10个案例，含根因与代码级分析） | LibreNMS, Docker, SNMP, RRD |
+| [librenms-manual-metric-patching](./librenms-manual-metric-patching) | 白牌设备性能指标手工补齐方法论 + 可复用 SQL 模板 | LibreNMS, MySQL |
+| [librenms-snmptrap-housekeeping-sop](./librenms-snmptrap-housekeeping-sop) | SNMP Trap 接收链路 / Housekeeping / 私有 MIB 接入 SOP 文档 | LibreNMS, SNMP, Docker |
 
 ## 关于脱敏
 

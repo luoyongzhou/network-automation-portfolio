@@ -1,0 +1,119 @@
+IKUAI-AP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    OBJECT-TYPE, NOTIFICATION-TYPE, MODULE-IDENTITY,
+    Integer32, Opaque, TimeTicks, IpAddress, enterprises, Counter32, Unsigned32
+        FROM SNMPv2-SMI
+
+    TEXTUAL-CONVENTION, DisplayString, TruthValue
+	FROM SNMPv2-TC;
+
+apMIB MODULE-IDENTITY
+    LAST-UPDATED	"201704180645Z"
+    ORGANIZATION	"Organization "
+    CONTACT-INFO	"Contact-info"
+    DESCRIPTION		"Description"
+    REVISION		"201704180645Z"
+    DESCRIPTION		""
+    ::= { enterprises 1 }
+
+ap           OBJECT IDENTIFIER ::= { enterprises 7375 }
+apbasic      OBJECT IDENTIFIER ::= { ap 1 }
+
+apNumber  OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The number of ap"
+    ::= { apbasic 1 }
+
+apTable OBJECT-TYPE
+    SYNTAX	SEQUENCE OF ApEntry
+    MAX-ACCESS	not-accessible
+    STATUS	current
+    DESCRIPTION
+	"A table containing information on running
+	 programs/daemons configured for monitoring in the
+	 snmpd.conf file of the agent.  Processes violating the
+	 number of running processes required by the agent's
+	 configuration file are flagged with numerical and
+	 textual errors."
+    ::= { apbasic 2 }
+
+apEntry OBJECT-TYPE
+    SYNTAX	ApEntry
+    MAX-ACCESS	not-accessible
+    STATUS	current
+    DESCRIPTION
+        "An entry containing a process and its statistics."
+    INDEX	{ apIndex }
+    ::= { apTable  1 }
+
+ApEntry ::= SEQUENCE {
+    apIndex		Integer32,
+    apId		Integer32,
+    apMac		DisplayString,
+    apIpAddress		IpAddress,
+    apVersion		DisplayString,
+    apChannel		Integer32,
+    apUptime		TimeTicks
+}
+
+apIndex OBJECT-TYPE
+    SYNTAX	Integer32 (0..65535)
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Reference Index for each observed process."
+    ::= { apEntry 1 }
+
+apId OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The ap id"
+    ::= { apEntry 2 }
+
+apMac OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The ap mac address"
+    ::= { apEntry 3 }
+
+apIpAddress OBJECT-TYPE
+    SYNTAX	IpAddress
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The ip address"
+    ::= { apEntry 4 }
+
+apVersion OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The ap version"
+    ::= { apEntry 5 }
+
+apChannel OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The ap channel"
+    ::= { apEntry 6 }
+
+apUptime OBJECT-TYPE
+    SYNTAX	TimeTicks
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The ap uptime"
+    ::= { apEntry 7 }
+
+END

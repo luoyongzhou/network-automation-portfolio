@@ -1,0 +1,19 @@
+os: ikuai
+text: 'iKuai OS'
+type: firewall
+group: unix
+mib_dir: ikuai
+icon: ikuai
+ifname: true
+over:
+    - { graph: device_bits, text: 'Device Traffic' }
+    - { graph: device_processor, text: 'CPU Usage' }
+    - { graph: device_mempool, text: 'Memory Usage' }
+discovery:
+    -
+        sysDescr:
+            - Linux iKuai
+    -
+        sysObjectID: .1.3.6.1.4.1.8072.3.2.10
+        sysDescr:
+            - iKuai
