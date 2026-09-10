@@ -1,0 +1,41 @@
+{# ============================================================ #}
+{# 厂商级：vendors/h3c/netconf_cmd.j2                           #}
+{# 用途：所有 H3C 设备的 NETCONF 初始化（默认实现）             #}
+{# ============================================================ #}
+{#
+# 此模板被所有 H3C 设备继承（除非被产线/OS/补丁级覆盖）
+# 包含 H3C 通用的 NETCONF 启用命令
+#}
+
+{% import 'vendors/h3c/cmd/_macros.j2' as macros %}
+
+
+{# H3C 通用 NETCONF 启用 #}
+{# ---- 独立块 1：RSA 密钥（含交互输入 512） ---- #}
+#INDEPENDENT:START
+public-key local create rsa
+y
+512
+#INDEPENDENT:END
+
+{# ---- 独立块 2：DSA 密钥（含交互输入 512） ---- #}
+#INDEPENDENT:START
+public-key local create dsa
+y
+512
+#INDEPENDENT:END
+
+{# ---- 独立块 3：ECDSA 密钥（无额外输入） ---- #}
+#INDEPENDENT:START
+public-key local create ecdsa secp256r1
+y
+#INDEPENDENT:END
+
+
+netconf ssh server enable
+netconf ssh server port 830
+
+{# 子模板可在此插入差异命令 #}
+{% block custom_config %}{% endblock %}
+
+end

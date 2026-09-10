@@ -1,0 +1,13 @@
+h3c_sr88_comware_v7:
+  parents: [h3c_sr88]
+  data:
+    os_version: V7
+    supports_netconf: true
+  connection_options:
+    ncclient:               # 新增连接，不影响原有的 netmiko
+      port: 830
+      extras:
+        device_params:
+          name: hpcomware
+        hostkey_verify: false
+        timeout: 60

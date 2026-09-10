@@ -1,0 +1,31 @@
+{# 省略顶部变量说明 #}
+{% import 'vendors/h3c/cmd/_macros.j2' as macros %}
+
+
+
+
+
+{# 仅在管理接口为 Vlan-interface 时才创建 VLAN #}
+{% if mgmt_interface.startswith('Vlan-interface') %}
+{{ macros.vlan_config(100, "Management") }}
+{% endif %}
+
+{{ macros.interface_config(mgmt_interface, mgmt_ip, mgmt_mask, "Management Interface") }}
+
+{% if gateway and gateway|trim != '' %}
+{{ macros.static_route("0.0.0.0", "0", gateway) }}
+{% endif %}
+
+ssh server enable
+ssh server authentication-retries 3
+{{ macros.ssh_user(username, password) }}
+
+{% if enable_secret %}
+super password simple {{ enable_secret }}
+{% endif %}
+
+{# 子级可在此插入额外配置 #}
+{% block custom_config %}{% endblock %}
+
+{# 避免过早修改设备名称，触发80字符换行，导致netmiko原生命令校验失败 #}
+sysname {{ sysname }}

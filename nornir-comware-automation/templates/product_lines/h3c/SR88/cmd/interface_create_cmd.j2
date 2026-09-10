@@ -1,0 +1,12 @@
+{# ============================================================ #}
+{# 场景模板：SR88 接口创建（仅接口，不含 IP）                   #}
+{# 路径：product_lines/h3c/SR88/cmd/interface_create_cmd.j2     #}
+{# ============================================================ #}
+{# 变量：ifname（必填），description（可选）                    #}
+
+interface {{ ifname }}
+ undo shutdown
+{% if description is defined and description %}
+ description {{ description }}
+{% endif %}
+quit

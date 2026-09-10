@@ -1,0 +1,24 @@
+{# ============================================================ #}
+{# 模板: product_lines/h3c/SR88/bootstrap.j2                    #}
+{# 用途: SR88 产线开局配置模板                                  #}
+{# 适用: H3C SR88 系列                                          #}
+{# ============================================================ #}
+{#
+# SR88 特有：接口类型为 Ten-GigabitEthernet
+# 如果不需要额外接口配置，可以只保留 extends
+#}
+
+{% extends 'vendors/h3c/cmd/bootstrap.j2' %}
+
+{# 可选：追加 SR88 特有的接口配置（示例） #}
+{# 若不需要，可以删除整个 block #}
+{% block custom_config %}
+
+line vty 0 6
+authentication-mode scheme
+user-role network-admin
+user-role network-operator
+quit
+
+lldp global enable
+{% endblock %}

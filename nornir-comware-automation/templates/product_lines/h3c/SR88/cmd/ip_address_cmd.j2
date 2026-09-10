@@ -1,0 +1,9 @@
+{# ============================================================ #}
+{# 场景模板：SR88 IP 地址配置（接口必须已存在）                 #}
+{# 路径：product_lines/h3c/SR88/cmd/ip_address_cmd.j2          #}
+{# ============================================================ #}
+{# 变量：ifname（必填），ipv4_address（必填），ipv4_mask（必填）#}
+
+interface {{ ifname }}
+ ip address {{ ipv4_address }} {{ ipv4_mask }}
+quit

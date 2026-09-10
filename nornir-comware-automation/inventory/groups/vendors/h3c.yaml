@@ -1,0 +1,16 @@
+h3c:
+  platform: hp_comware
+  connection_options:
+    netmiko:
+      port: 22
+      extras:
+        device_type: hp_comware
+        timeout: 60
+    netmiko_oob:
+      username: ""
+      password: ""
+      port: 23
+      extras:
+        device_type: hp_comware_telnet
+        timeout: 120
+        global_delay_factor: 3

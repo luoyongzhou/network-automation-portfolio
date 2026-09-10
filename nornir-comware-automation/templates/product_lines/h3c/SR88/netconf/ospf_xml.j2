@@ -1,0 +1,57 @@
+{# ============================================================ #}
+{# 场景模板：SR88 OSPF 完整配置                                #}
+{# 路径：product_lines/h3c/SR88/netconf/ospf_xml.j2            #}
+{# 用途：一次性下发完整 OSPF 配置                              #}
+{# Step1：配置OSPFv2全局进程实例+router-id                    #}
+{# Step2：配置OSPFv2进程内的area 0                              #}
+{# Step3：配置OSPFv2进程启用的接口和进程对应area 0                 #}
+{# Step4：配置OSPFv2启用进程接口的类型参数，未指定为broadcast，指定则为具体值，如P2P\P2MP  #}
+{# ============================================================ #}
+{#
+# TODO: 待补充 OSPF 配置逻辑
+{# ============================================================ #}
+{# 场景模板：SR88 OSPF 完整配置（混合操作）                    #}
+{# 严格遵循官方文档，Instance/Area 使用 create，Interface 使用 merge #}
+{# 命名空间：http://www.h3c.com/netconf/config:1.0             #}
+{# ============================================================ #}
+{# OSPF 完整配置模板（H3C 私有模型） 增加rollback-on-error特性#}
+<OSPF xmlns="http://www.h3c.com/netconf/config:1.0">
+  <Instances>
+    <Instance>
+      <Name>{{ ospf.instance_name }}</Name>
+      <RouterId>{{ ospf.router_id }}</RouterId>
+    </Instance>
+  </Instances>
+  <Areas>
+    {% for area in ospf.areas %}
+    <Area>
+      <Name>{{ ospf.instance_name }}</Name>
+      <AreaId>{{ area.area_id }}</AreaId>
+      <AreaType>{{ area.area_type | default(0) }}</AreaType>
+    </Area>
+    {% endfor %}
+  </Areas>
+  <Interfaces>
+    {% for area in ospf.areas %}
+      {% for iface in area.interfaces %}
+    <Interface>
+      <IfIndex>{{ iface.ifindex }}</IfIndex>
+      <IfEnable>
+        <Name>{{ ospf.instance_name }}</Name>
+        <AreaId>{{ area.area_id }}</AreaId>
+        <ExcludedSubIp>false</ExcludedSubIp>
+      </IfEnable>
+      {% if iface.network_type is defined %}
+      <NetworkType>{{ iface.network_type }}</NetworkType>
+      {% endif %}
+      {% if iface.cost is defined %}
+      <Cost>{{ iface.cost }}</Cost>
+      {% endif %}
+      {% if iface.priority is defined %}
+      <DrPriority>{{ iface.priority }}</DrPriority>
+      {% endif %}
+    </Interface>
+      {% endfor %}
+    {% endfor %}
+  </Interfaces>
+</OSPF>

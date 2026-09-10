@@ -1,0 +1,54 @@
+{# ============================================================ #}
+{# 模板: vendors/h3c/_macros.j2                                 #}
+{# 用途: H3C 通用宏定义                                         #}
+{# 适用: 所有 H3C 设备                                          #}
+{# ============================================================ #}
+
+{#
+# 宏：接口配置（自动识别物理接口并转为三层模式）
+# 用法：{{ interface_config(name, ip, mask, desc) }}
+#}
+{%- macro interface_config(name, ip, mask, desc='') %}
+interface {{ name }}
+ undo shutdown
+{# 如果是物理接口（以常见物理口关键字开头），强制转为三层模式 #}
+{% if name.startswith('GigabitEthernet') or name.startswith('Ten-GigabitEthernet') or name.startswith('FortyGigE') or name.startswith('HundredGigE') or name.startswith('XGE') or name.startswith('GE') %}
+ port link-mode route
+{% endif %}
+ ip address {{ ip }} {{ mask }}
+{% if desc %}
+ description {{ desc }}
+{% endif %}
+ quit
+{%- endmacro %}
+
+{#
+# 宏：VLAN 配置
+# 用法：{{ vlan_config(id, name) }}
+#}
+{%- macro vlan_config(id, name) %}
+vlan {{ id }}
+ name {{ name }}
+ quit
+{%- endmacro %}
+
+{#
+# 宏：静态路由
+# 用法：{{ static_route(dest, mask, next_hop) }}
+#}
+{%- macro static_route(dest, mask, next_hop) %}
+ip route-static {{ dest }} {{ mask }} {{ next_hop }}
+{%- endmacro %}
+
+{#
+# 宏：SSH 用户配置（Comware V7 语法）
+# 用法：{{ ssh_user(username, password, role='network-admin') }}
+#}
+{%- macro ssh_user(username, password, role='network-admin',role2='network-operator') %}
+local-user {{ username }} class manage
+ password simple {{ password }}
+ service-type ssh
+ authorization-attribute user-role {{ role }}
+ authorization-attribute user-role {{ role2 }}
+ quit
+{%- endmacro %}

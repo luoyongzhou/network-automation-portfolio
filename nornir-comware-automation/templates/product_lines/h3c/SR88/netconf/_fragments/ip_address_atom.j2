@@ -1,0 +1,24 @@
+{# ============================================================ #}
+{# 原子模板：SR88 IPv4 地址配置                                 #}
+{# 路径：product_lines/h3c/SR88/netconf/_fragments/ip_address_atom.j2 #}
+{# 用途：在已有接口上配置/删除 IPv4 地址                       #}
+{# ============================================================ #}
+{# 变量：                                                       #}
+{#   - ifindex: 接口索引（必填）                                #}
+{#   - ipv4_address: IPv4 地址，点分十进制（必填）              #}
+{#   - ipv4_mask: 子网掩码，点分十进制（必填）                  #}
+{#   - address_origin: 1=Manual, 2=Manual-sub（默认 1）         #}
+{#   - operation: create / delete / merge（默认 create）        #}
+{# ============================================================ #}
+<IPV4ADDRESS xmlns="http://www.h3c.com/netconf/config:1.0">
+    <Ipv4Addresses>
+        <Ipv4Address{% if operation == 'delete' %} xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0" nc:operation="delete"{% endif %}>
+            <IfIndex>{{ ifindex }}</IfIndex>
+            <Ipv4Address>{{ ipv4_address }}</Ipv4Address>
+{% if operation != 'delete' %}
+            <Ipv4Mask>{{ ipv4_mask }}</Ipv4Mask>
+            <AddressOrigin>{{ address_origin | default(1) }}</AddressOrigin>
+{% endif %}
+        </Ipv4Address>
+    </Ipv4Addresses>
+</IPV4ADDRESS>

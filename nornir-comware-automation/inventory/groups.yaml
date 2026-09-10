@@ -1,0 +1,57 @@
+h3c_sr88_comware_v7:
+  platform: hp_comware
+  connection_options:
+    netmiko:
+      port: 22
+      extras:
+        device_type: hp_comware
+        timeout: 90
+        global_delay_factor: 1.5
+    netmiko_oob:
+      username: ''
+      password: ''
+      port: 23
+      extras:
+        device_type: hp_comware_telnet
+        timeout: 120
+        global_delay_factor: 3
+    ncclient:
+      port: 830
+      extras:
+        device_params:
+          name: hpcomware
+        hostkey_verify: false
+        timeout: 60
+  data:
+    product_line: SR88
+    os_version: V7
+    supports_netconf: true
+h3c_sr88_comware_v7_r7171:
+  platform: hp_comware
+  connection_options:
+    netmiko:
+      port: 22
+      extras:
+        device_type: hp_comware
+        timeout: 90
+        global_delay_factor: 1.5
+    netmiko_oob:
+      username: ''
+      password: ''
+      port: 23
+      extras:
+        device_type: hp_comware_telnet
+        timeout: 120
+        global_delay_factor: 3
+    ncclient:
+      port: 830
+      extras:
+        device_params:
+          name: hpcomware
+        hostkey_verify: false
+        timeout: 120
+  data:
+    product_line: SR88
+    os_version: V7
+    supports_netconf: true
+    os_patch: R7171

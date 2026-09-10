@@ -1,0 +1,17 @@
+{# ============================================================ #}
+{# 分支级：os_versions/h3c/SR88_Comware_V7_R7171/netconf_cmd.j2 #}
+{# 用途：R7171 分支的 NETCONF 初始化（继承 V7，追加差异）      #}
+{# ============================================================ #}
+{#
+# R7171 分支特有的 NETCONF 配置
+# 例如：R7171 修复了某个 NETCONF Bug，需要额外参数
+#}
+
+{% extends 'os_versions/h3c/SR88_Comware_V7/cmd/netconf_cmd.j2' %}
+
+{% block custom_config %}
+{# 继承 V7 级内容 #}
+{{ super() }}
+
+
+{% endblock %}

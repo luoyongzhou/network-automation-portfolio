@@ -1,0 +1,21 @@
+{# ============================================================ #}
+{# 模板: os_versions/h3c/SR88_Comware_V7/bootstrap.j2           #}
+{# 用途: Comware V7 专属开局配置模板                            #}
+{# 适用: H3C SR88 运行 Comware V7 及以上版本                   #}
+{# ============================================================ #}
+{#
+# V7 特有：
+#   -预留
+#}
+
+{% extends 'product_lines/h3c/SR88/cmd/bootstrap.j2' %}
+
+{# 覆盖 SR88 产线级模板中的 custom_config 块 #}
+{% block custom_config %}
+
+
+
+
+{# 继承父级的接口配置 #}
+{{ super() }}
+{% endblock %}
