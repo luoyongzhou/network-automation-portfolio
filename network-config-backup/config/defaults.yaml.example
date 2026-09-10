@@ -1,0 +1,17 @@
+# ========================================
+# 默认连接参数（示例，复制为 defaults.yaml 后填入真实凭据）
+# 生产环境建议改用 Vault / 密钥管理服务，而不是明文写入 YAML
+# ========================================
+username: changeme
+password: changeme
+secret: changeme
+
+connection_options:
+  netmiko:
+    extras:
+      secret: changeme
+      timeout: 30
+      session_timeout: 30
+      auth_timeout: 15
+      fast_cli: false  # 兼容老旧设备
+      global_delay_factor: 1

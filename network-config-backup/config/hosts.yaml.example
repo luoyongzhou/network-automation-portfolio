@@ -1,0 +1,46 @@
+# ========================================
+# 设备清单示例（复制为 hosts.yaml 后填入真实资产信息）
+# 建议从 LibreNMS / NetBox 等 IPAM 系统同步生成，而不是手工维护
+#
+# location 字段用于 collect_configs.py 按站点归档配置，
+# 可自行定义站点命名规则，不要求与厂商分组一致。
+# ========================================
+
+core-sw01:
+  hostname: 10.0.1.1
+  platform: huawei_vrp
+  port: 22
+  groups:
+    - huawei_group
+  username: ops
+  password: changeme
+  data:
+    sysname: core-sw01
+    hardware: S6730-H24X6C
+    location: site-a
+
+access-sw01:
+  hostname: 10.0.1.10
+  platform: h3c_comware
+  port: 22
+  groups:
+    - h3c_group
+  username: ops
+  password: changeme
+  data:
+    sysname: access-sw01
+    hardware: S5560X-54C-EI
+    location: site-a
+
+edge-router01:
+  hostname: 10.0.2.1
+  platform: cisco_ios
+  port: 22
+  groups:
+    - cisco_group
+  username: ops
+  password: changeme
+  data:
+    sysname: edge-router01
+    hardware: ISR4331/K9
+    location: site-b

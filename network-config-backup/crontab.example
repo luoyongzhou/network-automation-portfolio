@@ -1,0 +1,11 @@
+# 每天凌晨2点采集设备配置
+0 2 * * * python3 /opt/network-config-backup/collect_configs.py >> /home/network_device_configs/cron.log 2>&1
+
+# 每28天凌晨4点全量 Git 备份网络配置（基准日按部署时间调整）
+# 示例：以 2026-04-17（当年第107天）为基准，每 28 天触发一次
+0 4 * * * [ $(( ($(date +\%j) - 107) \% 28 )) -eq 0 ] && /opt/network-config-backup/git_configs.sh >> /home/network_device_configs/git_backup.log 2>&1
+
+# ============================================
+# 网络设备可达性监控：每5分钟检测一次，设备不可达时发送钉钉告警
+# ============================================
+*/5 * * * * /usr/bin/python3.9 /opt/network-config-backup/ping_monitor.py >> /var/log/ping_monitor/monitor.log 2>&1

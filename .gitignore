@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+venv/
+.venv/
+.env
+*.log
+data/
+logs/
+.DS_Store
+
+# network-config-backup: 真实设备清单/凭据文件，仅保留 .example 模板
+network-config-backup/config/hosts.yaml
+network-config-backup/config/defaults.yaml

@@ -1,0 +1,30 @@
+# ========================================
+# 设备组配置（按厂商分类，翻页/确认交互各不相同）
+# ========================================
+
+h3c_group:
+  platform: h3c_comware
+  data:
+    prompt_regex: "[<\\[].*[>\\]]"
+    more_prompt: "---- More ----"
+    more_key: " "  # 空格翻页
+    save_confirm: ["Y"]
+    reboot_confirm: ["N", "Y"]
+
+huawei_group:
+  platform: huawei_vrp
+  data:
+    prompt_regex: "[<\\[].*[>\\]]"
+    more_prompt: "---- More ----"
+    more_key: " "
+    save_confirm: ["Y"]
+    reboot_confirm: ["N", "Y"]
+
+cisco_group:
+  platform: cisco_ios
+  data:
+    prompt_regex: "[#>]$"
+    more_prompt: "--More--"
+    more_key: " "
+    save_confirm: []
+    reboot_confirm: [""]  # 回车确认
