@@ -1,0 +1,16 @@
+[package]
+name = "cwa-inventory"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "分层继承的设备清单加载与 Group 继承合并"
+
+[dependencies]
+serde.workspace = true
+serde_yaml_ng.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[[example]]
+name = "dump_inventory"
+path = "../../examples/dump_inventory.rs"

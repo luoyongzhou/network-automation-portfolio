@@ -11,3 +11,9 @@ logs/
 # network-config-backup: 真实设备清单/凭据文件，仅保留 .example 模板
 network-config-backup/config/hosts.yaml
 network-config-backup/config/defaults.yaml
+
+# 归档压缩包，不入库
+*.zip
+
+# Rust 构建产物
+target/

@@ -1,0 +1,21 @@
+[package]
+name = "cwa-templating"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "补丁版本提取 + 分层模板路径解析 + minijinja 渲染"
+
+[dependencies]
+cwa-inventory.workspace = true
+minijinja.workspace = true
+minijinja-contrib.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml_ng.workspace = true
+regex.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[[example]]
+name = "render_probe"
+path = "../../examples/render_probe.rs"

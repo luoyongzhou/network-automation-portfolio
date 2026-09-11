@@ -1,0 +1,10 @@
+---
+h3c_sr88_comware_v7_r7171:               # 👈 连补丁号都带上了
+  parents: [h3c_sr88_comware_v7]
+  data:
+    os_patch: "R7171"
+    # 假设 R7171 版本有特殊 bug，NETCONF 超时需要加长
+  connection_options:
+    ncclient:
+      extras:
+        timeout: 120                     # 覆盖父级的 60

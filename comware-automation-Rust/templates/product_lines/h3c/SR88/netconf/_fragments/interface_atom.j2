@@ -1,0 +1,22 @@
+{# ============================================================ #}
+{# 原子模板：SR88 接口创建                                      #}
+{# 路径：product_lines/h3c/SR88/netconf/_fragments/interface_atom.j2 #}
+{# 用途：创建/删除接口，不包含 IP 配置                          #}
+{# ============================================================ #}
+{# 变量：                                                       #}
+{#   - ifindex: 接口索引（必填）                                #}
+{#   - iftype: 接口类型， Loopback （必填）         #}
+{#   - description: 接口描述（可选）                            #}
+{#   - operation: create / delete / merge（默认 create）        #}
+{# ============================================================ #}
+<Ifmgr xmlns="http://www.h3c.com/netconf/config:1.0">
+    <Interfaces>
+        <Interface{% if operation == 'delete' %} xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0" nc:operation="delete"{% endif %}>
+            <IfIndex>{{ ifindex }}</IfIndex>
+            <Type>Loopback</Type>
+{% if description is defined and description and operation != 'delete' %}
+            <Description>{{ description }}</Description>
+{% endif %}
+        </Interface>
+    </Interfaces>
+</Ifmgr>

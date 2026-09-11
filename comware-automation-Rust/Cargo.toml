@@ -1,0 +1,43 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/inventory",
+    "crates/templating",
+    "crates/transport",
+    "crates/atoms",
+    "crates/scenes",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+# 供应链风险缓解（见 MIGRATION_PLAN.md 6.2）：
+# rustnetconf / rneter 均为 2026 年新项目，锁定精确版本，不用 caret range。
+[workspace.dependencies]
+# —— 内部 crate ——
+cwa-inventory = { path = "crates/inventory" }
+cwa-templating = { path = "crates/templating" }
+cwa-transport = { path = "crates/transport" }
+cwa-atoms = { path = "crates/atoms" }
+
+# —— 传输层（锁定精确版本）——
+rustnetconf = "=0.17.0"
+rneter = "=0.5.2"
+telnet = "=0.2.5"
+
+# —— 通用 ——
+minijinja = { version = "2.24", features = ["loader"] }
+minijinja-contrib = { version = "2.24", features = ["pycompat"] }
+serde = { version = "1", features = ["derive"] }
+serde_yaml_ng = "0.10"
+serde_json = "1"
+roxmltree = "0.21"
+regex = "1"
+clap = { version = "4", features = ["derive"] }
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+anyhow = "1"
+thiserror = "2"

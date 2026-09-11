@@ -1,0 +1,10 @@
+h3c_sr88:
+  parents: [h3c]
+  data:
+    product_line: SR88
+  connection_options:
+    netmiko:                 # 覆盖父级的 timeout
+      extras:
+        timeout: 90
+        global_delay_factor: 1.5
+    # 注意：这里没有重新定义 netmiko_oob，它会从父级继承

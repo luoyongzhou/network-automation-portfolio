@@ -1,0 +1,26 @@
+[package]
+name = "cwa-scenes"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "三阶段场景编排与 CLI 入口"
+
+[[bin]]
+name = "cwa"
+path = "src/main.rs"
+
+[dependencies]
+cwa-inventory.workspace = true
+cwa-templating.workspace = true
+cwa-transport.workspace = true
+cwa-atoms.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml_ng.workspace = true
+clap.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
+
+

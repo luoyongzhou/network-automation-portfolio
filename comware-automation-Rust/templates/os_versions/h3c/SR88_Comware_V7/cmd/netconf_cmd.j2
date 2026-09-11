@@ -1,0 +1,17 @@
+{# ============================================================ #}
+{# OS 版本级：os_versions/h3c/SR88_Comware_V7/netconf_cmd.j2   #}
+{# 用途：Comware V7 的 NETCONF 初始化（V7 特有）               #}
+{# ============================================================ #}
+{#
+# Comware V7 特有的 NETCONF 配置
+# 这是大多数设备实际使用的模板（除非被分支/补丁覆盖）
+#}
+
+{% extends 'product_lines/h3c/SR88/cmd/netconf_cmd.j2' %}
+
+{# V7 特有：启用 NETCONF 的同时，配置 V7 特有的参数 #}
+{% block custom_config %}
+{# 继承产线级内容 #}
+{{ super() }}
+
+{% endblock %}

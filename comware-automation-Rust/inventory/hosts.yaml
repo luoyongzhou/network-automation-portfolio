@@ -1,0 +1,90 @@
+# inventory/hosts.yaml
+---
+# ============================================================
+# 生产环境核心路由器 - SSH 可达，同时保留 OOB 应急通道
+# ============================================================
+H3C-SR88-01:
+  hostname: 172.12.1.11                      # 【必填】SSH 业务管理 IP
+  groups:
+    - h3c_sr88_comware_v7_r7171
+  connection_options:
+    # ---- OOB（Console 映射 Telnet） ----
+    netmiko_oob:
+      hostname: 127.0.0.1           # 【必填】串口服务器 IP（固定）
+      port: 30001                          # 【必填】该设备对应的 Telnet 端口
+    # ---- NETCONF（如果需要覆盖默认值） ----
+    ncclient:
+      port: 830                           # 【选填】默认 830，通常无需修改
+      extras:
+        timeout: 60                       # 【选填】可覆盖 Group 中的值
+  data:
+    location: "IDC-A"
+    role: core_router
+    mgmt_interface: GigabitEthernet0/0/0
+
+H3C-SR88-02:
+  hostname: 172.12.1.12                      # 【必填】SSH 业务管理 IP
+  groups:
+    - h3c_sr88_comware_v7_r7171
+  connection_options:
+    # ---- OOB（Console 映射 Telnet） ----
+    netmiko_oob:
+      hostname: 127.0.0.1           # 【必填】串口服务器 IP（固定）
+      port: 30002                          # 【必填】该设备对应的 Telnet 端口
+    # ---- NETCONF（如果需要覆盖默认值） ----
+    ncclient:
+      port: 830                           # 【选填】默认 830，通常无需修改
+      extras:
+        timeout: 60                       # 【选填】可覆盖 Group 中的值
+  data:
+    location: "IDC-A"
+    role: core_router
+    mgmt_interface: GigabitEthernet0/0/0
+
+H3C-SR88-03:
+  hostname: 172.12.1.13                      # 【必填】SSH 业务管理 IP
+  groups:
+    - h3c_sr88_comware_v7_r7171
+  connection_options:
+    # ---- OOB（Console 映射 Telnet） ----
+    netmiko_oob:
+      hostname: 127.0.0.1           # 【必填】串口服务器 IP（固定）
+      port: 30003                          # 【必填】该设备对应的 Telnet 端口
+    # ---- NETCONF（如果需要覆盖默认值） ----
+    ncclient:
+      port: 830                           # 【选填】默认 830，通常无需修改
+      extras:
+        timeout: 60                       # 【选填】可覆盖 Group 中的值
+  data:
+    location: "IDC-A"
+    role: core_router
+    mgmt_interface: GigabitEthernet0/0/0
+
+
+
+## ============================================================
+## 测试环境新设备 - 未上架，仅 OOB 可达
+## ============================================================
+#H3C-SR88-Test-New-01:
+#  hostname: 192.168.255.101               # 【临时】OOB IP（SSH 尚不可达）
+#  groups:
+#    - h3c_sr88_comware_v7
+#  connection_options:
+#    netmiko_oob:
+#      hostname: 192.168.255.100           # 【必填】串口服务器 IP
+#      port: 2002                          # 【必填】该设备对应的 Telnet 端口
+#  data:
+#    target_mgmt_ip: 10.0.0.2              # 【必填】待配置的业务管理 IP
+#    role: test_router_new
+#
+## ============================================================
+## 另一台生产设备 - 无 OOB 通道
+## ============================================================
+#H3C-SR88-Core-02:
+#  hostname: 10.0.0.3                      # 【必填】SSH 业务管理 IP
+#  groups:
+#    - h3c_sr88_comware_v7
+#  # 没有 connection_options，完全使用 Group 中的默认值
+#  data:
+#    location: "IDC-B"
+#    role: core_router

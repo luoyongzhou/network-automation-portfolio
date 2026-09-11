@@ -1,0 +1,19 @@
+[package]
+name = "cwa-transport"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "CLI(SSH) / NETCONF / Console(Telnet) 三通道传输层"
+
+[dependencies]
+cwa-inventory.workspace = true
+rustnetconf.workspace = true
+rneter.workspace = true
+telnet.workspace = true
+roxmltree.workspace = true
+regex.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
