@@ -9,8 +9,19 @@
 
 | 文档 | 内容 |
 | :--- | :--- |
+| [`TESTING.md`](./TESTING.md) | **测试样例清单**。T1 基准对齐 / T2 离线功能（均已通过，含复现方法）、T3 真机验证（未执行，搭好环境后跑这部分） |
 | [`RESEARCH.md`](./RESEARCH.md) | 前期成熟度调研：逐层核实 Rust 生态能否替代 Nornir / Jinja2 / Netmiko / ncclient |
 | [`MIGRATION_PLAN.md`](./MIGRATION_PLAN.md) | 迁移企划：目标架构、crate 选型、分期计划、风险登记 |
+
+### 模块文档
+
+| 模块 | 职责 | 对应 Python |
+| :--- | :--- | :--- |
+| [`crates/inventory`](./crates/inventory/README.md) | Group 继承合并 + Host/Group/defaults 三级解析 | `scripts/build_inventory.py` + Nornir Inventory |
+| [`crates/templating`](./crates/templating/README.md) | 补丁提取 + 分层路径解析 + minijinja 渲染 | `scripts/preview_bootstrap.py` |
+| [`crates/transport`](./crates/transport/README.md) | CLI(SSH) / NETCONF / Console(Telnet) 三通道 | `atoms/utils.py` + Netmiko/ncclient 调用 |
+| [`crates/atoms`](./crates/atoms/README.md) | 四阶段原子操作 + 快照存储 | `atoms/` |
+| [`crates/scenes`](./crates/scenes/README.md) | 场景编排 + `cwa` 二进制入口 | `scenes/` |
 
 ## 快速开始
 
@@ -82,6 +93,8 @@ inventory/         同上（groups.yaml 不再需要，继承在内存中展开�
 - 错误检测：正确区分 `% Unrecognized command`（报错）与 ` ip address 1.1.1.1`（正常配置行）
 - 全部 9 个子命令可执行
 
+复现方法见 [`TESTING.md`](./TESTING.md) 的 T1 / T2 系列。
+
 ### 未验证（需真机）
 
 - Comware 在 `rustnetconf` `GenericVendor` profile 下的 hello 能力协商
@@ -90,6 +103,8 @@ inventory/         同上（groups.yaml 不再需要，继承在内存中展开�
 - 80 字符换行问题（模板中 `sysname` 仍置于末行以保留 Python 版的规避手法）
 - Console Telnet 的 ZTP 中断时序、`Press ENTER` 交互
 - 所有真实的下发与回退路径
+
+对应 [`TESTING.md`](./TESTING.md) 的 T3 系列（12 条用例，含建议执行顺序与排查方向）。
 
 ## 相对 Python 版补齐的能力
 
@@ -121,11 +136,23 @@ inventory/         同上（groups.yaml 不再需要，继承在内存中展开�
 
 ## 测试
 
-按要求**未编写测试代码**。上述"已验证"项通过 `examples/` 下两个可运行示例与临时探针完成，探针已清理，保留：
+按要求**未编写测试代码**。验证清单与复现方法见 [`TESTING.md`](./TESTING.md)：
+
+- **T1 基准对齐**（5 条，已通过）：与 Python 版做逐键 / 逐字节比对
+- **T2 离线功能**（11 条，已通过）：不接触设备的全部逻辑
+- **T3 真机验证**（12 条，**未执行**）：需要设备，含建议执行顺序与排查方向
+
+仓库内保留两个可运行示例：
 
 ```bash
 cargo run -p cwa-inventory  --example dump_inventory -- .   # Group 展开 + Host 解析
 cargo run -p cwa-templating --example render_probe           # 分层查找 + 渲染
 ```
 
-与 Python 版做逐字节比对的方法记录在 `MIGRATION_PLAN.md` 第 3 章（黄金文件比对）。
+### T1 附带发现
+
+原本设计的 `--python-compat` 开关（开启 autoescape 以对齐 Python）**实测做不到，已移除**：
+
+Jinja2（markupsafe）的 HTML 转义集是 `& < > " '`，**不含 `/`**；而 minijinja 额外转义 `/`，会把 `GigabitEthernet0/0/0` 变成 `GigabitEthernet0&#x2f;0&#x2f;0`。
+
+因此 autoescape 全程关闭才是与 Python 版一致的正确选择。当前模板与数据中不含需转义字符，关闭后输出逐字节一致，且附带消除了 Python 版的一个隐患（若密码含 `&`，Python 版会下发 `&amp;`）。

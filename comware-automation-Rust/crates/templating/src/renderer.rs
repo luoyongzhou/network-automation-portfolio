@@ -7,12 +7,25 @@
 //! 1. `trim_blocks` / `lstrip_blocks` 均开启
 //! 2. 注册 `minijinja-contrib` 的 `pycompat`，使模板中的 `name.startswith(...)`
 //!    可用（`templates/vendors/h3c/cmd/_macros.j2` 依赖此能力）
-//! 3. **autoescape 默认关闭**。Python 版是 `select_autoescape(['xml','j2'])`，
-//!    即对所有 `.j2` 做 HTML 转义。对本项目而言这实际是个隐患：NETCONF 的 XML
-//!    模板走同一个 Environment，一旦配置值里出现 `&` 就会被转义成 `&amp;` 并
-//!    下发到设备。CLI 命令同理。目前因配置值里没有 `<>&` 而未暴露。
-//!    此处默认关闭，并提供 `with_autoescape()` 用于需要逐字节对齐 Python 输出
-//!    时（黄金文件比对）临时开启。
+//! 3. **autoescape 全程关闭**，这是与 Python 版一致的正确选择。
+//!
+//! 关于第 3 点需要说明清楚，因为它看起来像是偏离了 Python 版的配置：
+//!
+//! Python 版写的是 `select_autoescape(['xml','j2'])`，字面上对所有 `.j2`
+//! 启用 HTML 转义。但实测 Python 版渲染 `bootstrap.j2` 的输出里，
+//! `interface GigabitEthernet0/0/0` 的 `/` **没有被转义** —— 因为 Jinja2
+//! （markupsafe）的转义集只有 `& < > " '`，不含 `/`。
+//!
+//! 而 minijinja 的 HTML 转义**额外转义 `/`**，会把接口名变成
+//! `GigabitEthernet0&#x2f;0&#x2f;0`，直接破坏配置。
+//!
+//! 两者的转义规则不兼容，因此"开启 autoescape 以对齐 Python"是做不到的。
+//! 正确做法是全程关闭：当前模板与数据中不含 `& < > " '`，关闭后与 Python
+//! 版输出逐字节一致（已验证 bootstrap.j2 533B / netconf_cmd.j2 286B /
+//! ospf_xml.j2 1003B 三处完全相同）。
+//!
+//! 附带的好处是消除了 Python 版的一个隐患：若将来配置值里出现 `&`
+//! （例如密码含 `&`），Python 版会转成 `&amp;` 并下发到设备，而本实现不会。
 
 use std::path::{Path, PathBuf};
 
@@ -35,7 +48,13 @@ impl TemplateRenderer {
         Self::build(templates_root.into(), false)
     }
 
-    /// 开启 autoescape，用于与 Python 版做逐字节比对。
+    /// 开启 HTML autoescape。
+    ///
+    /// **一般不要使用。** minijinja 的 HTML 转义会额外转义 `/`
+    /// （Jinja2 不会），导致 `GigabitEthernet0/0/0` 变成
+    /// `GigabitEthernet0&#x2f;0&#x2f;0`，破坏配置。
+    ///
+    /// 保留此构造器仅用于将来可能出现的、确实需要转义的模板场景。
     pub fn with_autoescape(templates_root: impl Into<PathBuf>) -> Result<Self, TemplateError> {
         Self::build(templates_root.into(), true)
     }

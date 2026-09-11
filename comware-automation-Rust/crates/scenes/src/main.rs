@@ -34,10 +34,6 @@ struct Cli {
     #[arg(long, default_value_t = 10, global = true)]
     workers: usize,
 
-    /// 与 Python 版逐字节对齐渲染输出（开启 autoescape）
-    #[arg(long, global = true)]
-    python_compat: bool,
-
     #[command(subcommand)]
     command: Commands,
 }
@@ -120,11 +116,7 @@ async fn main() -> anyhow::Result<()> {
 
     // ---- 模板引擎 ----
     let templates_root = root.join("templates");
-    let renderer = if cli.python_compat {
-        TemplateRenderer::with_autoescape(&templates_root)?
-    } else {
-        TemplateRenderer::new(&templates_root)?
-    };
+    let renderer = TemplateRenderer::new(&templates_root)?;
     let scene = SceneApi::new(renderer);
 
     let plans = DevicePlans::load(&root);
